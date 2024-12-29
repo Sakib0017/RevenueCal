@@ -3,6 +3,7 @@ import Select from 'react-select';
 import axios from 'axios';
 import Navbar from './Navbar';
 import 'flowbite';
+import { Link } from "react-router-dom";
 
 const Calculate = () => {
   const [options, setOptions] = useState([]);
@@ -25,6 +26,16 @@ const Calculate = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle Delete
+  const handleDelete = (id) => {
+    axios.delete('http://localhost:5000/api/accounts/' + id)
+      .then(res => {
+        console.log(res);
+        window.location.reload(); // Refresh the page after delete
+      })
+      .catch(err => console.log(err));
   };
 
   // Fetch account types
@@ -72,14 +83,6 @@ const Calculate = () => {
     setAccountType(selectedOption);
   };
 
-  // Form data state
-  const [formData, setFormData] = useState({
-    accountType: accountType?.label,
-    accountHead: accountHead?.label,
-    amount: '',
-    status: '',
-  });
-
   // Fetch accounts on component mount
   useEffect(() => {
     fetchAccounts();
@@ -113,6 +116,20 @@ const Calculate = () => {
     }
   };
 
+  // Separate accounts into debit and credit
+  const creditAccounts = accounts.filter((account) => account.accountType?.toLowerCase() === 'credit');
+  const debitAccounts = accounts.filter((account) => account.accountType?.toLowerCase() === 'debit');
+  const calculateTotalCredit = () => {
+    return creditAccounts.reduce((total, account) => total + parseFloat(account.amount || 0), 0).toFixed(2);
+  };
+  const calculateTotalDebit = () => {
+    return debitAccounts.reduce((total, account) => total + parseFloat(account.amount || 0), 0).toFixed(2);
+  };
+  const calculateProfit = () => {
+    const totalCredit = calculateTotalCredit();
+    const totalDebit = calculateTotalDebit();
+    return (totalCredit - totalDebit).toFixed(2);
+  };
   return (
     <>
       <Navbar />
@@ -125,7 +142,7 @@ const Calculate = () => {
                 options={options1}
                 onInputChange={handleInputChange1}
                 onChange={handleChange1}
-                value={accountType} // Ensure the select value is controlled
+                value={accountType}
                 placeholder='Account Type'
                 isSearchable
                 className='w-full'
@@ -137,7 +154,7 @@ const Calculate = () => {
                 options={options}
                 onInputChange={handleInputChange}
                 onChange={handleChange}
-                value={accountHead} // Ensure the select value is controlled
+                value={accountHead}
                 placeholder='Account Head'
                 isSearchable
                 className='w-full'
@@ -178,36 +195,10 @@ const Calculate = () => {
         </form>
       </div>
 
-      <div className='max-w-7xl mx-auto m-2'>
-        <div className='max-w-xl me-auto p-1'>
-          <div className='relative'>
-            <input
-              type='text'
-              id='search'
-              placeholder='Search here...'
-              className='w-full p-2 pl-12 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500'
-            />
-            <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500'>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-                className='h-6 w-6'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  d='M10 4a6 6 0 016 6 6 6 0 01-6 6 6 6 0 01-6-6 6 6 0 016-6zm0 0a6 6 0 016 6 6 6 0 01-6 6 6 6 0 01-6-6 6 6 0 016-6z'
-                />
-              </svg>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className='relative max-w-7xl mb-20 mx-auto overflow-x-auto'>
+      {/* Credit Accounts Table */}
+      <div className="grid md:grid-cols-2 max-w-7xl mx-auto gap-5 overflow-auto">
+      <div className='relative max-w-7xl col-span-1 mt-10 mb-20 mx-auto overflow-x-auto'>
+        
         <table className='w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400'>
           <thead className='text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>
             <tr>
@@ -223,35 +214,127 @@ const Calculate = () => {
               <th scope='col' className='px-6 py-3'>
                 Status
               </th>
+              <th scope='col' className='px-6 py-3'>
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan='4' className='text-center px-6 py-4'>
+                <td colSpan='5' className='text-center px-6 py-4'>
                   Loading...
                 </td>
               </tr>
-            ) : accounts.length > 0 ? (
-              accounts.map((account) => (
+            ) : creditAccounts.length > 0 ? (
+              creditAccounts.map((account) => (
                 <tr key={account._id} className='bg-white border-b dark:bg-gray-800 dark:border-gray-700'>
-                  <td className='px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white'>
-                    {account.accountType}
-                  </td>
+                  <td className='px-6 py-4'>{account.accountType}</td>
                   <td className='px-6 py-4'>{account.accountHead}</td>
                   <td className='px-6 py-4'>{account.amount}</td>
                   <td className='px-6 py-4'>{account.status}</td>
+                  <td className='px-6 py-4 gap-2'>
+                    <Link to={`/update/${account._id}`}>
+                      <button className='bg-blue-700 m-1 text-white p-1 rounded'>Edit</button>
+                    </Link>
+                    <button
+                      onClick={(e) => handleDelete(account._id)}
+                      className='bg-red-700 rounded m-1 text-white p-1'
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan='4' className='text-center px-6 py-4'>
-                  No accounts available
+                <td colSpan='5' className='text-center px-6 py-4'>
+                  No credit accounts available
                 </td>
               </tr>
             )}
           </tbody>
+          <tfoot className='bg-gray-100 dark:bg-gray-700'>
+      <tr>
+        <td colSpan='4' className='px-6 py-4 font-bold'>Total Credit</td>
+        <td colSpan='1' className='px-6 py-4 font-bold'>{calculateTotalCredit()}</td>
+      </tr>
+    </tfoot>
         </table>
+      </div>
+
+      {/* Debit Accounts Table */}
+      <div className='relative max-w-7xl col-span-1 mt-10 mb-20 mx-auto overflow-x-auto'>
+        
+        <table className='w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400'>
+          <thead className='text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>
+            <tr>
+              <th scope='col' className='px-6 py-3'>
+                Account Type
+              </th>
+              <th scope='col' className='px-6 py-3'>
+                Account Head
+              </th>
+              <th scope='col' className='px-6 py-3'>
+                Amount
+              </th>
+              <th scope='col' className='px-6 py-3'>
+                Status
+              </th>
+              <th scope='col' className='px-6 py-3'>
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan='5' className='text-center px-6 py-4'>
+                  Loading...
+                </td>
+              </tr>
+            ) : debitAccounts.length > 0 ? (
+              debitAccounts.map((account) => (
+                <tr key={account._id} className='bg-white border-b dark:bg-gray-800 dark:border-gray-700'>
+                  <td className='px-6 py-4'>{account.accountType}</td>
+                  <td className='px-6 py-4'>{account.accountHead}</td>
+                  <td className='px-6 py-4'>{account.amount}</td>
+                  <td className='px-6 py-4'>{account.status}</td>
+                  <td className='px-6 py-4 gap-2'>
+                    <Link to={`/update/${account._id}`}>
+                      <button className='bg-blue-700 text-white m-1 p-1 rounded'>Edit</button>
+                    </Link>
+                    <button
+                      onClick={(e) => handleDelete(account._id)}
+                      className='bg-red-700 rounded text-white m-1 p-1'
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan='5' className='text-center px-6 py-4'>
+                  No debit accounts available
+                </td>
+              </tr>
+            )}
+          </tbody>
+          <tfoot className='bg-gray-100 dark:bg-gray-700'>
+      <tr>
+        <td colSpan='4' className='px-6 py-4 font-bold'>Total Credit</td>
+        <td colSpan='1' className='px-6 py-4 font-bold'>{calculateTotalDebit()}</td>
+      </tr>
+    </tfoot>
+        </table>
+      </div>
+      <div className='bg-gray-100 dark:bg-gray-700 max-w-7xl mx-auto'>
+      <tr>
+        <td colSpan='4' className='px-6 py-4 font-bold'>Total Profit</td>
+        <td colSpan='1' className='px-6 py-4 font-bold'>{calculateProfit()}</td>
+      </tr>
+      </div>
       </div>
     </>
   );

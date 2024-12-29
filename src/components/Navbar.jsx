@@ -20,7 +20,7 @@ const Navbar = () => {
                     </div>
                     <div className="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-cta">
                         <ul className="flex flex-col font-medium p-4 md:p-0 mt-4 border  rounded-lg  md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 ">
-                            <Link to="/"> <li>
+                            <Link to="/dashboard"> <li>
                                 <a href="#" className="block py-2 px-3 md:p-0 text-white  rounded md:bg-transparent font-bold" aria-current="page">Dashboard</a>
                             </li>
                             </Link>

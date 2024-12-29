@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Navbar from "../src/components/Navbar"
 import Dashboard from "../src/components/Dashboard"
 import Calculate from "../src/components/Calculate"
-import Credits from './components/Credits';
+import Update from "../src/components/Update"
 import 'flowbite';
 function App() {
 
@@ -14,9 +14,9 @@ function App() {
       
         <Routes>
           <Route element={<Navbar />} />
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/calculate" element={<Calculate />} />
-          <Route path="/credits" element={<Credits />} />
+          <Route path="/update/:id" element={<Update />} />
         </Routes>
       
     </Router>
