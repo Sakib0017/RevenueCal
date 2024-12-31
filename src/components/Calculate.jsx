@@ -115,7 +115,30 @@ const Calculate = () => {
       setLoading(false);
     }
   };
+  const generatePDF = async () => {
+    try {
+      const response = await axios.post('http://localhost:5000/generate-pdf', {
+        creditAccounts,
+        debitAccounts,
+      }, {
+        responseType: 'blob', // To handle binary response (PDF)
+      });
 
+      // Create a link to download the PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'generated.pdf'; // The name of the file to be downloaded
+      link.click();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
+
+  // Fetch accounts on component mount
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
   // Separate accounts into debit and credit
   const creditAccounts = accounts.filter((account) => account.accountType?.toLowerCase() === 'credit');
   const debitAccounts = accounts.filter((account) => account.accountType?.toLowerCase() === 'debit');
@@ -335,6 +358,11 @@ const Calculate = () => {
         <td colSpan='1' className='px-6 py-4 font-bold'>{calculateProfit()}</td>
       </tr>
       </div>
+      <div className='max-w-7xl mx-auto gap-5 flex justify-between'>
+      
+      <button className='bg-green-900 h-[30px] p-2 rounded text-white' >Save</button>
+      <button  className=" bg-blue-900 h-[30px] p-2 rounded text-white" onClick={generatePDF}>Generate PDF</button>
+    </div>
       </div>
     </>
   );
